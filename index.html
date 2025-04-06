@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> QR ID Card Generator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>CfW Beneficiary ID Card Generator</h1>
+     <div id="controls">
+      <div class="control-group">
+        <button id="downloadTemplate">Download CSV Template</button>
+        <input type="file" id="csvFile" accept=".csv">
+      </div>
+     </div>
+    <div id="progressBar" class="progress-container">
+      <div class="progress"></div>
+      <div id="progressText"></div>
+    </div>
+    <div id="pdfViewer"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+    <script src="https://unpkg.com/@pdf-lib/fontkit/dist/fontkit.umd.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
