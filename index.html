@@ -29,15 +29,15 @@
         <div class="form-grid">
           <div class="input-group">
             <label for="hh_id">HH ID</label>
-            <input type="text" id="hh_id" placeholder="e.g. HH12345" required autocomplete="off">
+            <input type="text" id="hh_id" name="HH ID" placeholder="e.g. HH12345" required autocomplete="off">
           </div>
           <div class="input-group">
             <label for="name">Name</label>
-            <input type="text" id="name" placeholder="Full Name" required autocomplete="off">
+            <input type="text" id="name" name="Name" placeholder="Full Name" required autocomplete="off">
           </div>
           <div class="input-group">
             <label for="gender">Gender</label>
-            <select id="gender" required>
+            <select id="gender" name="Gender" required>
               <option value="" disabled selected>Select Gender</option>
               <option value="Male">Male</option>
               <option value="Female">Female</option>
@@ -45,24 +45,63 @@
           </div>
           <div class="input-group">
             <label for="mobile">Mobile</label>
-            <input type="text" id="mobile" placeholder="01XXXXXXXXX" required autocomplete="off">
+            <input type="text" id="mobile" name="Mobile" placeholder="01XXXXXXXXX" required autocomplete="off">
           </div>
           <div class="input-group full-width">
             <label for="union">Union</label>
-            <input type="text" id="union" list="unionList" placeholder="Enter Union Name" required autocomplete="off">
+            <input type="text" id="union" name="Union" list="unionList" placeholder="Enter Union Name" required
+              autocomplete="off">
             <datalist id="unionList"></datalist>
           </div>
         </div>
-        <button type="submit" id="createSingle">Create QR ID Card</button>
+        <button type="submit" id="createSingle">Add BNF 👥</button>
       </form>
+
+      <!-- Manual Queue Area -->
+      <div id="manualQueueContainer"
+        style="display: none; margin-top: 2rem; border-top: 1px solid var(--glass-border); padding-top: 1.5rem;">
+        <h3>Manual Entry Queue (<span id="queueCount">0</span>)</h3>
+        <div class="table-responsive">
+          <table class="queue-table">
+            <thead>
+              <tr>
+                <th>HH ID</th>
+                <th>Name</th>
+                <th>Union</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="queueList">
+              <!-- Queue items will be injected here -->
+            </tbody>
+          </table>
+        </div>
+        <button id="generateManualPdf" style="background: #10b981; margin-top: 1.5rem;">Generate QR ID</button>
+      </div>
     </div>
 
     <!-- Batch Mode Controls -->
     <div id="batchMode" class="card-container">
       <h2>Batch Mode Generation</h2>
+
+      <div id="manualMappingContainer" class="custom-template-section" style="display: none;">
+        <h3>Manual Header Mapping</h3>
+        <p style="font-size: 0.8rem; margin-bottom: 1rem; color: var(--text-muted);">We couldn't identify this
+          template. Please map the headers below:</p>
+        <form id="manualMappingForm">
+          <div id="manualHeaderList" class="template-grid">
+            <!-- Dynamically populated rows based on CSV headers -->
+          </div>
+          <div class="form-actions">
+            <button type="submit">Generate QR ID Cards</button>
+            <button type="button" id="cancelManualMapping" class="secondary">Cancel</button>
+          </div>
+        </form>
+      </div>
+
       <div id="controls">
         <div class="control-group">
-          <button id="downloadTemplate">Download CSV Template</button>
+          <button id="downloadTemplate">Download CSV Template (Default)</button>
           <div class="file-input-wrapper">
             <label for="csvFile" class="file-label">Upload CSV File</label>
             <input type="file" id="csvFile" accept=".csv">

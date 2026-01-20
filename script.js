@@ -2,6 +2,15 @@
 let allCards = [];
 const cardsPerPage = 10;
 let unions = JSON.parse(localStorage.getItem('unions') || '[]');
+let manualQueue = [];
+
+// Default Template Configuration
+const DEFAULT_TEMPLATE = {
+    id: 'default',
+    name: 'QR Template - Default',
+    columns: ['HH ID', 'Name', 'Gender', 'Mobile', 'Union'],
+    primaryKey: 'HH ID'
+};
 
 // --- UI Elements ---
 const modeToggle = document.getElementById('modeToggle');
@@ -12,9 +21,14 @@ const singleForm = document.getElementById('singleForm');
 const pdfViewer = document.getElementById('pdfViewer');
 const downloadPdfBtn = document.getElementById('downloadPdfBtn');
 const pdfDownloadContainer = document.getElementById('pdfDownloadContainer');
+const manualQueueContainer = document.getElementById('manualQueueContainer');
+const queueList = document.getElementById('queueList');
+const queueCountSpan = document.getElementById('queueCount');
+const generateManualPdfBtn = document.getElementById('generateManualPdf');
 
 // --- State Management ---
 let currentPdfBlob = null;
+let activeTemplate = DEFAULT_TEMPLATE;
 
 // --- Initialization ---
 function init() {
@@ -46,8 +60,23 @@ modeToggle.addEventListener('change', () => {
     } else {
         batchMode.classList.remove('active');
         singleMode.classList.add('active');
+        manualMappingContainer.style.display = 'none';
+        activeTemplate = DEFAULT_TEMPLATE;
     }
     pdfViewer.style.display = 'none';
+    pdfDownloadContainer.style.display = 'none';
+});
+
+// Batch Mode: Download Default Template
+document.getElementById('downloadTemplate').addEventListener('click', () => {
+    const csvContent = DEFAULT_TEMPLATE.columns.join(',') + '\\n';
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${DEFAULT_TEMPLATE.name}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
 });
 
 // --- Validation and Formatting ---
@@ -55,7 +84,7 @@ const formatters = {
     hh_id: (val) => val.toUpperCase().replace(/[^A-Z0-9]/g, '').trim(),
     name: (val) => val.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ').trim(),
     mobile: (val) => {
-        const cleaned = val.replace(/\s+/g, '').replace(/[^0-9]/g, '');
+        const cleaned = val.replace(/\\s+/g, '').replace(/[^0-9]/g, '');
         return cleaned;
     },
     union: (val) => val.charAt(0).toUpperCase() + val.slice(1).trim()
@@ -63,7 +92,7 @@ const formatters = {
 
 function validateMobile(val) {
     const validPrefixes = ['013', '014', '015', '016', '017', '018', '019'];
-    const cleaned = val.replace(/\s+/g, '').replace(/[^0-9]/g, '');
+    const cleaned = val.replace(/\\s+/g, '').replace(/[^0-9]/g, '');
     if (cleaned.length !== 11) return false;
     return validPrefixes.some(prefix => cleaned.startsWith(prefix));
 }
@@ -109,72 +138,243 @@ function saveUnion(union) {
 singleForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(singleForm);
-    const data = {
-        hh_id: formData.get('hh_id') || document.getElementById('hh_id').value,
-        name: formData.get('name') || document.getElementById('name').value,
-        gender: formData.get('gender') || document.getElementById('gender').value,
-        mobile: formData.get('mobile') || document.getElementById('mobile').value,
-        union: formData.get('union') || document.getElementById('union').value
-    };
+    const data = {};
 
-    if (!validateMobile(data.mobile)) {
+    // Standardized fields from the form
+    DEFAULT_TEMPLATE.columns.forEach(col => {
+        data[col] = formData.get(col);
+    });
+
+    if (!validateMobile(data['Mobile'])) {
         alert('Please enter a valid 11-digit mobile number starting with 013-019.');
         return;
     }
 
-    saveUnion(data.union);
+    saveUnion(data['Union']);
+    manualQueue.push(data);
 
-    // Create preview data
-    const tempDiv = document.createElement('div');
-    new QRCode(tempDiv, {
-        text: data.hh_id,
-        width: 100,
-        height: 100,
-        colorDark: "#000000",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.H
+    singleForm.reset();
+    renderManualQueue();
+
+    // Smooth scroll to queue if it's the first item
+    if (manualQueue.length === 1) {
+        manualQueueContainer.scrollIntoView({ behavior: 'smooth' });
+    }
+});
+
+function renderManualQueue() {
+    if (manualQueue.length === 0) {
+        manualQueueContainer.style.display = 'none';
+        return;
+    }
+
+    manualQueueContainer.style.display = 'block';
+    queueCountSpan.textContent = manualQueue.length;
+    queueList.innerHTML = '';
+
+    manualQueue.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${item['HH ID']}</td>
+            <td>${item['Name']}</td>
+            <td>${item['Union']}</td>
+            <td><button class="remove-btn" onclick="removeFromQueue(${index})">Remove</button></td>
+        `;
+        queueList.appendChild(tr);
     });
+}
 
-    allCards = [{
-        data: data,
-        qrCode: tempDiv.innerHTML
-    }];
+window.removeFromQueue = (index) => {
+    manualQueue.splice(index, 1);
+    renderManualQueue();
+};
+
+generateManualPdfBtn.addEventListener('click', async () => {
+    if (manualQueue.length === 0) return;
+
+    updateProgress(0, 'Preparing cards...');
+    activeTemplate = DEFAULT_TEMPLATE;
+    allCards = [];
+
+    for (let i = 0; i < manualQueue.length; i++) {
+        const data = manualQueue[i];
+        const pkValue = data[activeTemplate.primaryKey];
+
+        // Store data without pre-generating QR (will generate fresh in PDF)
+        allCards.push({
+            data: data
+        });
+
+        const progress = ((i + 1) / manualQueue.length) * 50;
+        updateProgress(progress, `Processing card ${i + 1}...`);
+    }
 
     await generatePDF();
 });
 
-// Batch Mode
-document.getElementById('downloadTemplate').addEventListener('click', function () {
-    const headers = ['HH ID', 'Name', 'Gender', 'Mobile', 'Union'];
-    const csvContent = headers.join(',') + '\n';
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'id_card_template.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
-});
-
+// Batch Mode: CSV Upload with Auto-Match
 document.getElementById('csvFile').addEventListener('change', function (event) {
     const file = event.target.files[0];
     if (!file) return;
 
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const csvData = e.target.result;
+        const rows = csvData.split(/\r?\n/).filter(row => row.trim() !== "");
+        const headers = rows[0].split(',').map(h => h.trim());
+
+        // Check if headers match DEFAULT_TEMPLATE exactly (in sequence)
+        const headersMatch = headers.length === DEFAULT_TEMPLATE.columns.length &&
+            headers.every((h, i) => h === DEFAULT_TEMPLATE.columns[i]);
+
+        if (headersMatch) {
+            // Auto-match: proceed with default generation
+            activeTemplate = DEFAULT_TEMPLATE;
+            processUploadedFile(file);
+        } else {
+            // No match: show manual header mapping
+            showManualMappingUI(file, headers);
+        }
+    };
+    reader.readAsText(file);
+});
+
+function processUploadedFile(file) {
     updateProgress(0);
     const reader = new FileReader();
     reader.onload = async function (e) {
         const csvData = e.target.result;
-        const rows = csvData.split('\n').filter(row => row.trim() !== "");
+        const rows = csvData.split(/\r?\n/).filter(row => row.trim() !== "");
         allCards = [];
         await generateIdCards(rows);
         await generatePDF();
     };
     reader.readAsText(file);
+}
+
+const manualMappingContainer = document.getElementById('manualMappingContainer');
+const manualHeaderList = document.getElementById('manualHeaderList');
+const manualMappingForm = document.getElementById('manualMappingForm');
+const cancelManualMappingBtn = document.getElementById('cancelManualMapping');
+let pendingFile = null;
+
+function showManualMappingUI(file, headers) {
+    pendingFile = file;
+    manualHeaderList.innerHTML = `
+        <div class="template-row header">
+            <span>Seq</span>
+            <span>CSV Column</span>
+            <span>P.Key</span>
+        </div>
+    `;
+
+    // Maximum 5 slots for mapping
+    const maxSlots = 5;
+
+    // Create options for dropdown if needed
+    let dropdownOptions = '<option value="">Select Header...</option>';
+    if (headers.length > 5) {
+        headers.forEach(h => {
+            // Simple escaping for interaction safety
+            dropdownOptions += `<option value="${h.replace(/"/g, '&quot;')}">${h}</option>`;
+        });
+    }
+
+    // Determine how many rows to show: 
+    // If <= 5 headers, show exactly that many rows (auto-mapped).
+    // If > 5 headers, show 5 rows (for manual mapping).
+    const rowCount = headers.length <= 5 ? headers.length : 5;
+
+    for (let i = 0; i < rowCount; i++) {
+        const row = document.createElement('div');
+        row.className = 'template-row';
+
+        let inputHtml = '';
+        if (headers.length <= 5) {
+            // Auto-select sequentially (Readonly)
+            inputHtml = `<input type="text" name="col${i + 1}" value="${headers[i]}" readonly>`;
+        } else {
+            // Manual selection (Dropdown)
+            inputHtml = `<select name="col${i + 1}">${dropdownOptions}</select>`;
+        }
+
+        row.innerHTML = `
+            <span>${i + 1}</span>
+            ${inputHtml}
+            <input type="radio" name="primaryKey" value="col${i + 1}" ${i === 0 ? 'checked' : ''}>
+        `;
+        manualHeaderList.appendChild(row);
+    }
+
+    manualMappingContainer.style.display = 'block';
+}
+
+manualMappingForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const formData = new FormData(manualMappingForm);
+    const columns = [];
+    let pkName = '';
+
+    // Validation
+    const selectedValues = new Set();
+    let hasDuplicate = false;
+
+    for (let i = 1; i <= 5; i++) {
+        const colVal = formData.get(`col${i}`);
+        if (colVal && colVal.trim() !== '') {
+            if (selectedValues.has(colVal)) {
+                hasDuplicate = true;
+            }
+            selectedValues.add(colVal);
+
+            columns.push(colVal);
+            if (formData.get('primaryKey') === `col${i}`) {
+                pkName = colVal;
+            }
+        }
+    }
+
+    if (columns.length === 0) {
+        alert("Please select at least one header to map.");
+        return;
+    }
+
+    if (hasDuplicate) {
+        alert("Duplicate headers selected. Please select distinct headers for each column.");
+        return;
+    }
+
+    if (!pkName) {
+        alert("Invalid Primary Key. Please ensure the selected Primary Key row has a mapped header.");
+        return;
+    }
+
+    activeTemplate = {
+        id: 'manual',
+        name: 'Manual Mapping',
+        columns: columns,
+        primaryKey: pkName
+    };
+
+    manualMappingContainer.style.display = 'none';
+    if (pendingFile) processUploadedFile(pendingFile);
+});
+
+cancelManualMappingBtn.addEventListener('click', () => {
+    manualMappingContainer.style.display = 'none';
+    pendingFile = null;
 });
 
 async function generateIdCards(rows) {
     const headers = rows[0].split(',').map(header => header.trim());
     allCards = [];
+
+    // Find index of Primary Key
+    const pkIndex = headers.indexOf(activeTemplate.primaryKey);
+    if (pkIndex === -1) {
+        alert(`Error: Primary Key "${activeTemplate.primaryKey}" not found in CSV headers.`);
+        return;
+    }
 
     for (let i = 1; i < rows.length; i++) {
         const progress = (i / (rows.length - 1)) * 100;
@@ -184,22 +384,15 @@ async function generateIdCards(rows) {
         if (values.length === headers.length) {
             const data = {};
             headers.forEach((header, index) => {
-                const key = header.toLowerCase().replace(' ', '_');
+                const key = header; // Use exact name to match PK
                 data[key] = values[index];
             });
 
-            const tempDiv = document.createElement('div');
-            new QRCode(tempDiv, {
-                text: data.hh_id,
-                width: 100,
-                height: 100,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
+            const pkValue = data[activeTemplate.primaryKey];
+
+            // Store data without pre-generating QR (will generate fresh in PDF)
             allCards.push({
-                data: data,
-                qrCode: tempDiv.innerHTML
+                data: data
             });
 
             if (data.union) saveUnion(data.union);
@@ -267,13 +460,9 @@ async function generatePDF() {
             const textStartX = x + 10;
             const textWidth = cardWidth * 0.55 - 10;
 
-            const texts = [
-                `Name: ${data.name || ''}`,
-                `HH ID: ${data.hh_id || ''}`,
-                `Gender: ${data.gender || ''}`,
-                `Mobile: ${data.mobile || ''}`,
-                `Union: ${data.union || ''}`
-            ];
+            const texts = activeTemplate.columns.map(col => {
+                return `${col}: ${data[col] || ''}`;
+            });
 
             let totalLines = 0;
             texts.forEach(t => {
@@ -310,10 +499,11 @@ async function generatePDF() {
                 currentY = addWrappedText(text, currentY);
             });
 
-            // QR Code
+            // QR Code - Generate fresh (canvas is available immediately)
+            const pkValue = data[activeTemplate.primaryKey] || 'N/A';
             const tempDiv = document.createElement('div');
             new QRCode(tempDiv, {
-                text: data.hh_id,
+                text: pkValue,
                 width: 100,
                 height: 100,
                 colorDark: "#000000",
@@ -322,6 +512,11 @@ async function generatePDF() {
             });
 
             const qrCanvas = tempDiv.querySelector('canvas');
+            if (!qrCanvas) {
+                console.error("QR Code canvas not found");
+                continue;
+            }
+
             const qrDataUrl = qrCanvas.toDataURL('image/png');
             const qrImageBytes = await fetch(qrDataUrl).then(res => res.arrayBuffer());
             const qrImage = await pdfDoc.embedPng(qrImageBytes);
@@ -340,9 +535,10 @@ async function generatePDF() {
         }
 
         // Header
-        const startHHID = pageCards[0].data.hh_id || 'N/A';
-        const endHHID = pageCards[pageCards.length - 1].data.hh_id || 'N/A';
-        const headerText = `Page ${pageNum + 1} of ${pageCount} | HH ID Range: ${startHHID} - ${endHHID}`;
+        const startPK = pageCards[0].data[activeTemplate.primaryKey] || 'N/A';
+        const endPK = pageCards[pageCards.length - 1].data[activeTemplate.primaryKey] || 'N/A';
+        const pkLabel = activeTemplate.primaryKey;
+        const headerText = `Page ${pageNum + 1} of ${pageCount} | ${pkLabel} Range: ${startPK} - ${endPK}`;
 
         page.drawText(headerText, {
             x: (width - (headerText.length * 5.5)) / 2,
