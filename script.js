@@ -2,6 +2,15 @@
 let allCards = [];
 const cardsPerPage = 10;
 let unions = JSON.parse(localStorage.getItem('unions') || '[]');
+let qrTemplates = JSON.parse(localStorage.getItem('qr_templates') || '[]');
+
+// Default Template Configuration
+const DEFAULT_TEMPLATE = {
+    id: 'default',
+    name: 'QR Template - Default',
+    columns: ['HH ID', 'Name', 'Gender', 'Mobile', 'Union'],
+    primaryKey: 'HH ID'
+};
 
 // --- UI Elements ---
 const modeToggle = document.getElementById('modeToggle');
@@ -13,14 +22,49 @@ const pdfViewer = document.getElementById('pdfViewer');
 const downloadPdfBtn = document.getElementById('downloadPdfBtn');
 const pdfDownloadContainer = document.getElementById('pdfDownloadContainer');
 
+const templateGallery = document.getElementById('templateGallery');
+const templateList = document.getElementById('templateList');
+const editCustomTemplateBtn = document.getElementById('editCustomTemplate');
+const customTemplateEditor = document.getElementById('customTemplateEditor');
+const customTemplateForm = document.getElementById('customTemplateForm');
+const cancelTemplateEditBtn = document.getElementById('cancelTemplateEdit');
+
 // --- State Management ---
 let currentPdfBlob = null;
+let activeTemplate = DEFAULT_TEMPLATE;
 
 // --- Initialization ---
 function init() {
     updateUnionDatalist();
+    renderTemplateGallery();
 }
 init();
+
+function renderTemplateGallery() {
+    // Keep default template
+    templateList.innerHTML = `
+        <div class="template-item default">
+          <span class="template-name">QR Template - Default</span>
+          <div class="template-actions">
+            <button onclick="downloadDefaultTemplate()" title="Download">⬇️</button>
+          </div>
+        </div>
+    `;
+
+    qrTemplates.forEach((template, index) => {
+        const item = document.createElement('div');
+        item.className = 'template-item';
+        item.innerHTML = `
+            <span class="template-name" title="${template.name}">${template.name}</span>
+            <div class="template-actions">
+                <button onclick="downloadCustomTemplateById('${template.id}')" title="Download">⬇️</button>
+                <button onclick="editTemplate('${template.id}')" title="Edit">✏️</button>
+                <button onclick="deleteTemplate('${template.id}')" title="Delete">🗑️</button>
+            </div>
+        `;
+        templateList.appendChild(item);
+    });
+}
 
 // PDF Download Button Listener
 downloadPdfBtn.addEventListener('click', () => {
@@ -43,12 +87,113 @@ modeToggle.addEventListener('change', () => {
     if (isBatch) {
         singleMode.classList.remove('active');
         batchMode.classList.add('active');
+        templateGallery.style.display = 'block';
     } else {
         batchMode.classList.remove('active');
         singleMode.classList.add('active');
+        templateGallery.style.display = 'none';
+        customTemplateEditor.style.display = 'none';
     }
     pdfViewer.style.display = 'none';
 });
+
+// --- Template Editor Logic ---
+editCustomTemplateBtn.addEventListener('click', () => {
+    customTemplateEditor.style.display = 'block';
+    editCustomTemplateBtn.style.display = 'none';
+});
+
+cancelTemplateEditBtn.addEventListener('click', () => {
+    customTemplateEditor.style.display = 'none';
+    editCustomTemplateBtn.style.display = 'block';
+});
+
+// Custom Template Form Submission
+customTemplateForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const formData = new FormData(customTemplateForm);
+    const columns = [
+        formData.get('col1'),
+        formData.get('col2'),
+        formData.get('col3'),
+        formData.get('col4'),
+        formData.get('col5')
+    ].filter(c => c && c.trim() !== '');
+
+    const pkKey = formData.get('primaryKey'); // col1, col2, etc.
+    const pkIndex = parseInt(pkKey.replace('col', '')) - 1;
+    const pkName = columns[pkIndex];
+
+    const random6 = Math.floor(100000 + Math.random() * 900000).toString();
+    const templateName = `QR Template_${pkName}_${random6}`;
+
+    const newTemplate = {
+        id: Date.now().toString(),
+        name: templateName,
+        columns: columns,
+        primaryKey: pkName
+    };
+
+    qrTemplates.push(newTemplate);
+    localStorage.setItem('qr_templates', JSON.stringify(qrTemplates));
+    renderTemplateGallery();
+    downloadCSV(newTemplate);
+
+    customTemplateEditor.style.display = 'none';
+    editCustomTemplateBtn.style.display = 'block';
+});
+
+function downloadCSV(template) {
+    const csvContent = template.columns.join(',') + '\n';
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${template.name}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+function downloadDefaultTemplate() {
+    downloadCSV(DEFAULT_TEMPLATE);
+}
+
+function downloadCustomTemplateById(id) {
+    const template = qrTemplates.find(t => t.id === id);
+    if (template) downloadCSV(template);
+}
+
+function deleteTemplate(id) {
+    qrTemplates = qrTemplates.filter(t => t.id !== id);
+    localStorage.setItem('qr_templates', JSON.stringify(qrTemplates));
+    renderTemplateGallery();
+}
+
+function editTemplate(id) {
+    const template = qrTemplates.find(t => t.id === id);
+    if (template) {
+        customTemplateEditor.style.display = 'block';
+        editCustomTemplateBtn.style.display = 'none';
+        // Fill form with template data
+        template.columns.forEach((col, i) => {
+            const input = customTemplateForm.querySelector(`input[name="col${i + 1}"]`);
+            if (input) input.value = col;
+            if (col === template.primaryKey) {
+                const radio = customTemplateForm.querySelector(`input[name="primaryKey"][value="col${i + 1}"]`);
+                if (radio) radio.checked = true;
+            }
+        });
+        // We will remove the old one on save or just update it? 
+        // For simplicity, let's just create a new one as requested "reuse again and again".
+    }
+}
+
+function viewTemplate(id) {
+    const template = qrTemplates.find(t => t.id === id);
+    if (template) {
+        alert(`Template: ${template.name}\nColumns: ${template.columns.join(', ')}\nPrimary Key: ${template.primaryKey}`);
+    }
+}
 
 // --- Validation and Formatting ---
 const formatters = {
@@ -144,22 +289,36 @@ singleForm.addEventListener('submit', async (e) => {
 });
 
 // Batch Mode
-document.getElementById('downloadTemplate').addEventListener('click', function () {
-    const headers = ['HH ID', 'Name', 'Gender', 'Mobile', 'Union'];
-    const csvContent = headers.join(',') + '\n';
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'id_card_template.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
-});
+document.getElementById('downloadTemplate').addEventListener('click', downloadDefaultTemplate);
 
 document.getElementById('csvFile').addEventListener('change', function (event) {
     const file = event.target.files[0];
     if (!file) return;
 
+    // Identify Template from Filename (matching 6 random digits)
+    const fileName = file.name;
+    const match = fileName.match(/\d{6}/);
+    const randomId = match ? match[0] : null;
+
+    activeTemplate = null;
+
+    if (randomId) {
+        activeTemplate = qrTemplates.find(t => t.name.includes(randomId));
+    }
+
+    if (!activeTemplate && fileName.toLowerCase().includes('default')) {
+        activeTemplate = DEFAULT_TEMPLATE;
+    }
+
+    if (activeTemplate) {
+        processUploadedFile(file);
+    } else {
+        // No match found - show Manual Mapping UI
+        showManualMappingUI(file);
+    }
+});
+
+function processUploadedFile(file) {
     updateProgress(0);
     const reader = new FileReader();
     reader.onload = async function (e) {
@@ -170,11 +329,85 @@ document.getElementById('csvFile').addEventListener('change', function (event) {
         await generatePDF();
     };
     reader.readAsText(file);
+}
+
+const manualMappingContainer = document.getElementById('manualMappingContainer');
+const manualHeaderList = document.getElementById('manualHeaderList');
+const manualMappingForm = document.getElementById('manualMappingForm');
+const cancelManualMappingBtn = document.getElementById('cancelManualMapping');
+let pendingFile = null;
+
+function showManualMappingUI(file) {
+    pendingFile = file;
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const headers = e.target.result.split('\n')[0].split(',').map(h => h.trim());
+        manualHeaderList.innerHTML = `
+            <div class="template-row header">
+                <span>Seq</span>
+                <span>CSV Column</span>
+                <span>P.Key</span>
+            </div>
+        `;
+
+        headers.slice(0, 5).forEach((header, i) => {
+            const row = document.createElement('div');
+            row.className = 'template-row';
+            row.innerHTML = `
+                <span>${i + 1}</span>
+                <input type="text" name="col${i + 1}" value="${header}" readonly>
+                <input type="radio" name="primaryKey" value="col${i + 1}" ${i === 0 ? 'checked' : ''}>
+            `;
+            manualHeaderList.appendChild(row);
+        });
+
+        manualMappingContainer.style.display = 'block';
+    };
+    reader.readAsText(file);
+}
+
+manualMappingForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const formData = new FormData(manualMappingForm);
+    const columns = [];
+    let pkName = '';
+
+    for (let i = 1; i <= 5; i++) {
+        const colVal = formData.get(`col${i}`);
+        if (colVal) {
+            columns.push(colVal);
+            if (formData.get('primaryKey') === `col${i}`) {
+                pkName = colVal;
+            }
+        }
+    }
+
+    activeTemplate = {
+        id: 'manual',
+        name: 'Manual Mapping',
+        columns: columns,
+        primaryKey: pkName
+    };
+
+    manualMappingContainer.style.display = 'none';
+    if (pendingFile) processUploadedFile(pendingFile);
+});
+
+cancelManualMappingBtn.addEventListener('click', () => {
+    manualMappingContainer.style.display = 'none';
+    pendingFile = null;
 });
 
 async function generateIdCards(rows) {
     const headers = rows[0].split(',').map(header => header.trim());
     allCards = [];
+
+    // Find index of Primary Key
+    const pkIndex = headers.indexOf(activeTemplate.primaryKey);
+    if (pkIndex === -1) {
+        alert(`Error: Primary Key "${activeTemplate.primaryKey}" not found in CSV headers.`);
+        return;
+    }
 
     for (let i = 1; i < rows.length; i++) {
         const progress = (i / (rows.length - 1)) * 100;
@@ -184,13 +417,15 @@ async function generateIdCards(rows) {
         if (values.length === headers.length) {
             const data = {};
             headers.forEach((header, index) => {
-                const key = header.toLowerCase().replace(' ', '_');
+                const key = header; // Use exact name to match PK
                 data[key] = values[index];
             });
 
+            const pkValue = data[activeTemplate.primaryKey];
+
             const tempDiv = document.createElement('div');
             new QRCode(tempDiv, {
-                text: data.hh_id,
+                text: pkValue,
                 width: 100,
                 height: 100,
                 colorDark: "#000000",
@@ -267,13 +502,9 @@ async function generatePDF() {
             const textStartX = x + 10;
             const textWidth = cardWidth * 0.55 - 10;
 
-            const texts = [
-                `Name: ${data.name || ''}`,
-                `HH ID: ${data.hh_id || ''}`,
-                `Gender: ${data.gender || ''}`,
-                `Mobile: ${data.mobile || ''}`,
-                `Union: ${data.union || ''}`
-            ];
+            const texts = activeTemplate.columns.map(col => {
+                return `${col}: ${data[col] || ''}`;
+            });
 
             let totalLines = 0;
             texts.forEach(t => {
@@ -311,9 +542,10 @@ async function generatePDF() {
             });
 
             // QR Code
+            const pkValue = data[activeTemplate.primaryKey] || 'N/A';
             const tempDiv = document.createElement('div');
             new QRCode(tempDiv, {
-                text: data.hh_id,
+                text: pkValue,
                 width: 100,
                 height: 100,
                 colorDark: "#000000",
@@ -340,9 +572,10 @@ async function generatePDF() {
         }
 
         // Header
-        const startHHID = pageCards[0].data.hh_id || 'N/A';
-        const endHHID = pageCards[pageCards.length - 1].data.hh_id || 'N/A';
-        const headerText = `Page ${pageNum + 1} of ${pageCount} | HH ID Range: ${startHHID} - ${endHHID}`;
+        const startPK = pageCards[0].data[activeTemplate.primaryKey] || 'N/A';
+        const endPK = pageCards[pageCards.length - 1].data[activeTemplate.primaryKey] || 'N/A';
+        const pkLabel = activeTemplate.primaryKey;
+        const headerText = `Page ${pageNum + 1} of ${pageCount} | ${pkLabel} Range: ${startPK} - ${endPK}`;
 
         page.drawText(headerText, {
             x: (width - (headerText.length * 5.5)) / 2,
