@@ -109,95 +109,10 @@ h1 {
     color: #9333ea;
 }
 
-/* Layout Updates */
-.app-layout {
-    display: flex;
-    width: 100%;
-    max-width: 1200px;
-    gap: 2rem;
-    align-items: flex-start;
-    margin: 0 auto;
-}
-
-#mainContainer {
-    flex: 1;
-    max-width: 800px;
-}
-
-/* Gallery Sidebar */
-.gallery-sidebar {
-    width: 350px;
-    background: var(--card-bg);
-    padding: 1.5rem;
-    border-radius: 1rem;
-    box-shadow: var(--shadow);
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--glass-border);
-}
-
-.gallery-sidebar h3 {
-    font-size: 1rem;
-    margin-bottom: 1rem;
-    color: var(--primary-color);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.template-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.template-item {
-    background: white;
-    padding: 0.875rem 1rem;
-    border-radius: 0.75rem;
-    border: 1px solid #e2e8f0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: all 0.2s;
-}
-
-.template-item:hover {
-    border-color: var(--primary-color);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-}
-
-.template-name {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--text-main);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 180px;
-}
-
-.template-actions {
-    display: flex;
-    gap: 0.25rem;
-}
-
-.template-actions button {
-    width: auto;
-    margin: 0;
-    padding: 0.3rem;
-    background: transparent;
-    color: var(--text-muted);
-    font-size: 0.9rem;
-}
-
-.template-actions button:hover {
-    color: var(--primary-color);
-    background: #f1f5f9;
-}
-
 /* Containers */
 #mainContainer {
     width: 100%;
+    max-width: 800px;
 }
 
 .card-container {
@@ -295,81 +210,6 @@ button:hover {
     background: #059669;
 }
 
-#editCustomTemplate {
-    background: #6366f1;
-}
-
-#editCustomTemplate:hover {
-    background: #4f46e5;
-}
-
-/* Custom Template Editor */
-.custom-template-section {
-    margin-bottom: 2rem;
-    padding: 1.5rem;
-    background: #f8fafc;
-    border-radius: 0.75rem;
-    border: 1px solid #e2e8f0;
-    animation: fadeIn 0.3s ease;
-}
-
-.custom-template-section h3 {
-    font-size: 0.9rem;
-    margin-bottom: 1rem;
-    color: var(--text-main);
-}
-
-.template-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
-}
-
-.template-row {
-    display: grid;
-    grid-template-columns: 40px 1fr 100px;
-    align-items: center;
-    gap: 1rem;
-}
-
-.template-row.header {
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: var(--text-muted);
-    text-transform: uppercase;
-}
-
-.template-row span {
-    text-align: center;
-    font-size: 0.875rem;
-}
-
-.template-row input[type="text"] {
-    padding: 0.4rem 0.75rem;
-    font-size: 0.9rem;
-}
-
-.template-row input[type="radio"] {
-    width: 1rem;
-    height: 1rem;
-    margin: 0 auto;
-    cursor: pointer;
-}
-
-.form-actions {
-    display: flex;
-    gap: 0.75rem;
-}
-
-.form-actions button.secondary {
-    background: #94a3b8;
-}
-
-.form-actions button.secondary:hover {
-    background: #64748b;
-}
-
 .file-input-wrapper {
     position: relative;
     width: 100%;
@@ -453,18 +293,6 @@ button:hover {
     }
 }
 
-@media (max-width: 1024px) {
-    .app-layout {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .gallery-sidebar {
-        width: 100%;
-        max-width: 800px;
-    }
-}
-
 @media (max-width: 640px) {
     .form-grid {
         grid-template-columns: 1fr;
@@ -487,7 +315,6 @@ button:hover {
     }
 
     .header-container,
-    .app-layout>.gallery-sidebar,
     #mainContainer>.card-container,
     footer {
         display: none !important;
