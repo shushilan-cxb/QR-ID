@@ -1,205 +1,328 @@
+:root {
+    --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
+    --secondary-color: #64748b;
+    --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    --card-bg: rgba(255, 255, 255, 0.9);
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.5);
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
 body {
-  font-family: sans-serif;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-#controls {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  width: 100%;
-  max-width: 800px;
-  margin-bottom: 20px;
-}
-
-.control-group {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-}
-
-button {
-  padding: 8px 16px;
-  background-color: #0066cc;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-button#downloadPdf,
-#csvFile {
-  background-color: #28a745;
-}
-
-#csvFile {
-  color: white;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
-}
-
-.progress-container {
-  width: 100%;
-  max-width: 800px;
-  height: 20px;
-  background-color: #f0f0f0;
-  border-radius: 10px;
-  overflow: hidden;
-  margin: 10px 0;
-  display: none;
-}
-
-.progress {
-  width: 0%;
-  height: 100%;
-  background-color: #0066cc;
-  transition: width 0.3s ease;
-}
-
-#idCardContainer {
-  display: flex;
-  flex-wrap: wrap;
-  width: auto;
-  margin-top: 20px;
-  justify-content: center;
-}
-
-.idCard {
-  border: 3px dashed #000;
-  padding: 10px;
-  width: 350px;
-  height: 200px;
-  box-sizing: border-box;
-  margin: 10px;
-  page-break-inside: avoid;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.idCard:nth-child(2n) {
-  margin-right: 0;
-}
-
-.idCard .info {
-  flex: 1;
-  padding: 5px;
-}
-
-.idCard .info p {
-  margin: 0;
-  font-size: 12px;
-  white-space: normal;
-  word-wrap: break-word;
-  line-height: 1.5;
-  padding: 0 5px;
-}
-
-.idCard .info {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  height: 100%;
-  padding: 5px;
-  width: 55%;
-}
-
-
-#progressText {
-  text-align: center;
-  margin-top: 5px;
-}
-
-#pdfViewer {
-  width: 100vw;
-  margin-top: 20px;
-  min-height: 600px;
-  display: block;
-  position: relative;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-#pdfViewer iframe {
-  width: 100%;
-  height: 600px;
-  border: 1px solid #ccc;
-}
-
-.idCard .qrcode {
-  width: 45%;
-  padding: 0 15px;
-}
-
-.idCard .qrcode {
-  text-align: right;
-  padding: 5px;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  height: 100px;
-}
-
-.idCard .qrcode svg {
-  width: 100px;
-  height: 100px;
-}
-
-@media print {
-  body * {
-    visibility: hidden;
-  }
-
-  #idCardContainer,
-  #idCardContainer * {
-    visibility: visible;
-  }
-
-  body {
-    margin: 0px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-  }
-
-  #idCardContainer {
-    margin: 0px;
-    width: auto;
-    padding: 0px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg-gradient);
+    color: var(--text-main);
+    min-height: 100vh;
+    padding: 2rem;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-  }
+}
 
-  #idCardContainer>div {
+.header-container {
     width: 100%;
-  }
+    max-width: 800px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
 
-  .idCard {
-    border: 3px dashed #000;
-    padding: 0;
-    margin: 10px;
-    width: 350px;
-    height: 200px;
-    break-inside: avoid;
-  }
+h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
 
-  .idCard .info {
-    padding: 0;
-  }
+/* Mode Toggle Styles - Redesigned to match image */
+.toggle-container {
+    position: relative;
+    width: 220px;
+    height: 44px;
+    background-color: #9333ea;
+    /* Purple background */
+    border-radius: 22px;
+    padding: 3px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
 
-  .idCard .qrcode {
-    height: 100px;
-  }
+#modeToggle {
+    display: none;
+}
+
+.toggle-switch {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.toggle-label-text {
+    flex: 1;
+    z-index: 2;
+    text-align: center;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: white;
+    transition: color 0.3s ease;
+}
+
+.toggle-thumb {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50%;
+    height: 100%;
+    background-color: white;
+    border-radius: 20px;
+    z-index: 1;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Logic for Toggle States */
+#modeToggle:not(:checked)+.toggle-switch .toggle-thumb {
+    transform: translateX(0);
+}
+
+#modeToggle:checked+.toggle-switch .toggle-thumb {
+    transform: translateX(100%);
+}
+
+#modeToggle:not(:checked)+.toggle-switch .single {
+    color: #9333ea;
+}
+
+#modeToggle:checked+.toggle-switch .batch {
+    color: #9333ea;
+}
+
+/* Containers */
+#mainContainer {
+    width: 100%;
+    max-width: 800px;
+}
+
+.card-container {
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: var(--shadow);
+    display: none;
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    margin-bottom: 2rem;
+}
+
+.card-container.active {
+    display: block;
+    animation: fadeIn 0.4s ease;
+}
+
+h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-main);
+}
+
+/* Forms */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.input-group.full-width {
+    grid-column: span 2;
+}
+
+label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+input[type="text"],
+select {
+    padding: 0.75rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    transition: all 0.2s;
+    background: white;
+}
+
+input[type="text"]:focus,
+select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+button {
+    width: 100%;
+    margin-top: 1.5rem;
+    padding: 0.875rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+button:hover {
+    background: var(--primary-hover);
+}
+
+/* Batch Mode Specifics */
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+#downloadTemplate {
+    background: #10b981;
+}
+
+#downloadTemplate:hover {
+    background: #059669;
+}
+
+.file-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.file-label {
+    display: block;
+    width: 100%;
+    padding: 1.5rem;
+    background: #f1f5f9;
+    border: 2px dashed #cbd5e1;
+    border-radius: 0.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.file-label:hover {
+    background: #e2e8f0;
+    border-color: var(--primary-color);
+}
+
+#csvFile {
+    position: absolute;
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    z-index: -1;
+}
+
+/* Progress Bar */
+.progress-container {
+    margin-top: 1.5rem;
+    height: 12px;
+    background: #f1f5f9;
+    border-radius: 6px;
+    overflow: hidden;
+    display: none;
+}
+
+.progress {
+    height: 100%;
+    background: var(--primary-color);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+#progressText {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+/* PDF Viewer */
+#pdfViewer {
+    width: 100%;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    display: none;
+    margin-top: 2rem;
+}
+
+#pdfViewer iframe {
+    width: 100%;
+    height: 600px;
+    border: none;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 640px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .input-group.full-width {
+        grid-column: span 1;
+    }
+
+    .header-container {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+
+@media print {
+    body {
+        background: white;
+        padding: 0;
+    }
+
+    .header-container,
+    #mainContainer>.card-container,
+    footer {
+        display: none !important;
+    }
+
+    #pdfViewer {
+        display: block !important;
+        margin: 0;
+        box-shadow: none;
+    }
 }

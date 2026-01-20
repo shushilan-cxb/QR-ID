@@ -1,28 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> QR ID Card Generator</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <h1>CfW Beneficiary ID Card Generator</h1>
-     <div id="controls">
-      <div class="control-group">
-        <button id="downloadTemplate">Download CSV Template</button>
-        <input type="file" id="csvFile" accept=".csv">
-      </div>
-     </div>
-    <div id="progressBar" class="progress-container">
-      <div class="progress"></div>
-      <div id="progressText"></div>
-    </div>
-    <div id="pdfViewer"></div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
-    <script src="https://unpkg.com/@pdf-lib/fontkit/dist/fontkit.umd.min.js"></script>
-    <script src="script.js"></script>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title> QR ID Card Generator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="header-container">
+    <h1>CfW Beneficiary ID Card Generator</h1>
+    <div class="toggle-container">
+      <input type="checkbox" id="modeToggle">
+      <label for="modeToggle" class="toggle-switch">
+        <span class="toggle-label-text single">Single</span>
+        <span class="toggle-label-text batch">Batch</span>
+        <div class="toggle-thumb"></div>
+      </label>
+    </div>
+  </div>
+
+  <div id="mainContainer">
+    <!-- Single Mode Form -->
+    <div id="singleMode" class="card-container active">
+      <h2>Create Single ID Card</h2>
+      <form id="singleForm">
+        <div class="form-grid">
+          <div class="input-group">
+            <label for="hh_id">HH ID</label>
+            <input type="text" id="hh_id" placeholder="e.g. HH12345" required autocomplete="off">
+          </div>
+          <div class="input-group">
+            <label for="name">Name</label>
+            <input type="text" id="name" placeholder="Full Name" required autocomplete="off">
+          </div>
+          <div class="input-group">
+            <label for="gender">Gender</label>
+            <select id="gender" required>
+              <option value="" disabled selected>Select Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label for="mobile">Mobile</label>
+            <input type="text" id="mobile" placeholder="01XXXXXXXXX" required autocomplete="off">
+          </div>
+          <div class="input-group full-width">
+            <label for="union">Union</label>
+            <input type="text" id="union" list="unionList" placeholder="Enter Union Name" required autocomplete="off">
+            <datalist id="unionList"></datalist>
+          </div>
+        </div>
+        <button type="submit" id="createSingle">Create QR ID Card</button>
+      </form>
+    </div>
+
+    <!-- Batch Mode Controls -->
+    <div id="batchMode" class="card-container">
+      <h2>Batch Mode Generation</h2>
+      <div id="controls">
+        <div class="control-group">
+          <button id="downloadTemplate">Download CSV Template</button>
+          <div class="file-input-wrapper">
+            <label for="csvFile" class="file-label">Upload CSV File</label>
+            <input type="file" id="csvFile" accept=".csv">
+          </div>
+        </div>
+      </div>
+      <div id="progressBar" class="progress-container">
+        <div class="progress"></div>
+        <div id="progressText"></div>
+      </div>
+    </div>
+
+    <div id="pdfViewer"></div>
+    <div id="pdfDownloadContainer" style="display: none; margin-top: 1rem; width: 100%;">
+      <button id="downloadPdfBtn" style="background: #2563eb; width: 100%;">Download Generated PDF (.pdf)</button>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+  <script src="https://unpkg.com/@pdf-lib/fontkit/dist/fontkit.umd.min.js"></script>
+  <script src="script.js"></script>
 </body>
+
 </html>
