@@ -73,7 +73,7 @@ modeToggle.addEventListener('change', () => {
 
 // Batch Mode: Download Default Template
 document.getElementById('downloadTemplate').addEventListener('click', () => {
-    const csvContent = DEFAULT_TEMPLATE.columns.join(',') + '\\n';
+    const csvContent = DEFAULT_TEMPLATE.columns.join(',');
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -597,3 +597,4 @@ async function generatePDF() {
     // Show download button
     pdfDownloadContainer.style.display = 'block';
 }
+
