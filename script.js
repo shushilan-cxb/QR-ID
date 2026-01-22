@@ -12,6 +12,10 @@ const DEFAULT_TEMPLATE = {
     primaryKey: 'HH ID'
 };
 
+// --- Supabase Config ---
+const supabaseClient = window.supabase.createClient(window.supaConfig.supaUrl, window.supaConfig.supaKey);
+
+
 // --- UI Elements ---
 const modeToggle = document.getElementById('modeToggle');
 const singleMode = document.getElementById('singleMode');
@@ -100,14 +104,48 @@ function validateMobile(val) {
 // Attach Focus Out Handlers
 ['hh_id', 'name', 'mobile', 'union'].forEach(id => {
     const input = document.getElementById(id);
-    input.addEventListener('blur', () => {
+    input.addEventListener('blur', async () => {
         if (input.value) {
             input.value = formatters[id](input.value);
+
+            // Mobile Validation
             if (id === 'mobile') {
                 if (!validateMobile(input.value)) {
                     input.style.borderColor = '#ef4444';
                 } else {
                     input.style.borderColor = '';
+                }
+            }
+
+            // Supabase Lookup for HH ID
+            if (id === 'hh_id') {
+                const hhIdVal = input.value;
+                const nameInput = document.getElementById('name');
+
+                // Show loading state (optional UI feedback)
+                nameInput.placeholder = "Searching...";
+
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('BNF Name')
+                        .select('name')
+                        .eq('hhid', hhIdVal)
+                        .maybeSingle();
+
+                    if (error || !data) {
+                        alert("No BNF Found!");
+                        nameInput.value = "";
+                        input.value = ""; // Clear HH ID as well if invalid? User said "show a validation error message like No BNF Found!"
+                        input.focus();
+                    } else {
+                        // Success
+                        nameInput.value = data.name;
+                    }
+                } catch (err) {
+                    console.error("Supabase Error:", err);
+                    alert("Error connecting to database.");
+                } finally {
+                    nameInput.placeholder = "Full Name";
                 }
             }
         }

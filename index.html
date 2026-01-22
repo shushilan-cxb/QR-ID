@@ -33,7 +33,8 @@
           </div>
           <div class="input-group">
             <label for="name">Name</label>
-            <input type="text" id="name" name="Name" placeholder="Full Name" required autocomplete="off">
+            <input type="text" id="name" name="Name" placeholder="Full Name" required readonly
+              style="background-color: #e5e7eb; cursor: not-allowed;">
           </div>
           <div class="input-group">
             <label for="gender">Gender</label>
@@ -123,8 +124,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
   <script src="https://unpkg.com/@pdf-lib/fontkit/dist/fontkit.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
   <script src="script.js"></script>
 </body>
-
 
 </html>
